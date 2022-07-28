@@ -16,8 +16,13 @@
 */
 import { readdir } from 'fs/promises';
 import path from 'path';
+import esMain from 'es-main';
 
 export async function tree(some_path) {
+    if (!some_path) {
+        throw new Error('Path argument is empty!');
+    }
+
     let tree = { files: [], dirs: [some_path] };
     
     try {
@@ -46,4 +51,10 @@ async function updateTree(tree, some_path) {
     }
 
     return treeCopy;
+}
+
+if (esMain(import.meta)) {
+    const pathArg = process.argv[2];
+    const resultTree = await tree(pathArg);
+    console.log('tree', resultTree);
 }
