@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "create-file": "node file-creator.js"
+    "create-file": "node file-creator.js",
+    "split-file": "node file-spliter.js"
   },
   "keywords": [],
   "author": "",
