@@ -3,7 +3,10 @@ export default function (argv) {
     const resultArgs = { nokey: [] };
 
     for (let i = 0, j = 1; i < args.length; i += j) {
-        if (args[i].startsWith('-')) {
+        if (args[i].startsWith('--')) {
+            resultArgs.nokey.push(args[i]);
+            j = 1;
+        } else if (args[i].startsWith('-')) {
             const key = args[i].slice(1);
             resultArgs[key] = args[i + 1];
             j = 2;
