@@ -10,6 +10,7 @@ import { createWriteStream, createReadStream, existsSync } from 'fs';
 import { pipeline } from 'stream/promises';
 import argsParser from './argv-parser.js';
 import { stat } from 'fs/promises';
+import { Transform } from 'stream';
 
 
 async function splitFile(readFilePath, newFilesCount) {
@@ -18,7 +19,11 @@ async function splitFile(readFilePath, newFilesCount) {
 
     for (let i = 0; i < newFilesCount; i++) {
         const ranges = getRanges(fileSize, newFilesCount);
-        const readOptions = { start: ranges[i][0], end: ranges[i][1] };
+        const readOptions = {
+            start: ranges[i][0],
+            end: ranges[i][1],
+            highWaterMark: Math.ceil(fileSize / newFilesCount),
+        };
         await writeNewFile(readFilePath, `file_split_${i}.txt`, readOptions);
     }
 }
@@ -48,7 +53,20 @@ async function writeNewFile(readFilePath, writeFilePath, readOptions) {
 
     const readableStream = createReadStream(readFilePath, readOptions);
     const writableStream = createWriteStream(writeFilePath);
-    return pipeline(readableStream, writableStream);
+
+    const sortChunkNumbers = new Transform({
+        transform(chunk, encoding, callback) {
+            const stringNumbers = chunk.toString();
+            const sortedChunk = stringNumbers
+                .split(',')
+                .map(n => Number(n))
+                .sort((a, b) => a - b)
+                .join(',');
+            callback(null, sortedChunk);
+        }
+    });
+    
+    return await pipeline(readableStream, sortChunkNumbers, writableStream);
 }
 
 if (esMain(import.meta)) {
