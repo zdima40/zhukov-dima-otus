@@ -32,11 +32,14 @@ async function createFileWithRandomNumbers(filePath, mbSize = 1, maxRandomNumber
             const number = randomInt(maxRandomNumber);
             const stringNumber = String(number);
             const numberBytes = Buffer.byteLength(stringNumber, encoding);
-            fileSizeSum += numberBytes;
 
-            if (fileSizeSum >= bSize) {                
+            if ((fileSizeSum + numberBytes) >= bSize) {
+                fileSizeSum += numberBytes;           
                 isWrite = writableStream.write(stringNumber, encoding, callback);
             } else {
+                const stringNumber = `${number},`;
+                const numberBytes = Buffer.byteLength(stringNumber, encoding);
+                fileSizeSum += numberBytes;
                 isWrite = writableStream.write(stringNumber, encoding);
             }
         }
