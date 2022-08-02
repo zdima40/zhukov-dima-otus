@@ -61,7 +61,7 @@ async function writeNewFile(readFilePath, writeFilePath, readOptions) {
                 .split(',')
                 .map(n => Number(n))
                 .sort((a, b) => a - b)
-                .join(',');
+                .join('\n');
             callback(null, sortedChunk);
         }
     });
