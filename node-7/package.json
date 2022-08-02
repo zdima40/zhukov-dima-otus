@@ -1,0 +1,19 @@
+{
+  "name": "node-7",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "create-file": "node file-creator.js",
+    "test-cteate-file": "node --max-old-space-size=50 file-creator.js -- -path 'file-100Mb.txt' -size 100",
+    "test-sort-file": "node --max-old-space-size=50 index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "es-main": "^1.2.0"
+  }
+}
