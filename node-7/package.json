@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "create-file": "node file-creator.js",
-    "split-file": "node file-spliter.js"
+    "test-cteate-file": "node --max-old-space-size=50 file-creator.js -- -path 'file-100Mb.txt' -size 100",
+    "test-sort-file": "node --max-old-space-size=50 index.js"
   },
   "keywords": [],
   "author": "",
