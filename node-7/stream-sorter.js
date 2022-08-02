@@ -3,7 +3,7 @@ import { createWriteStream, createReadStream } from 'fs';
 
 let isWrite = true;
 
-export async function sortFiles(files) {
+export async function sortFiles(files, outFileName = 'out_file.txt') {
     const rls = files.map(file => {
         const fileStream = createReadStream(file);
         const rl = readline.createInterface({
@@ -13,7 +13,7 @@ export async function sortFiles(files) {
         return rl[Symbol.asyncIterator]();
     });
 
-    const writableStream = createWriteStream('out_file.txt');
+    const writableStream = createWriteStream(outFileName);
 
     const results = await Promise.all(rls.map(async rl => await rl.next()));
     const numbers = results.map(res => Number(res.value));
@@ -52,9 +52,7 @@ export async function sortFiles(files) {
             writableStream.end();
         }
    }
-
 }
-
 
 function writeMinNumber(writableStream, numbers) {
     let minNumber = Math.min(...numbers);
@@ -67,5 +65,3 @@ function writeMinNumber(writableStream, numbers) {
     isWrite = writableStream.write(`${minNumber},`);
     return indexMinNumber;
 }
-
-sortFiles(['file_split_0.txt', 'file_split_1.txt']);

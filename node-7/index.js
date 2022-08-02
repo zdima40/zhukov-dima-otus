@@ -1,15 +1,17 @@
-import { readFiles } from './files-reader.js';
-import { createWriteStream } from 'fs';
+import argsParser from './argv-parser.js';
+import { splitFile } from './file-spliter.js';
+import { sortFiles } from './stream-sorter.js';
 
 try {
     console.log('Please wait...');
+    const args = argsParser(process.argv);
+    
+    const files = await splitFile(args.path, args.count);
+    console.log(`File ${args.path} had been splited on ${args.count} files. Please wait...`);
 
-    const files = ['file_split_0.txt', 'file_split_1.txt'];
-    const readStream = readFiles(files);
-    const writableStream = createWriteStream('end_file.txt');
-    readStream.pipe(writableStream);
+    await sortFiles(files, args.out);
+    console.log(`File had been sorted.`);
 
-    console.log(`Files has been readed.`);
 } catch (error) {
     console.error(error.message);
 }

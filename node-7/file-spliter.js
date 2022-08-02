@@ -13,7 +13,8 @@ import { stat } from 'fs/promises';
 import { Transform } from 'stream';
 
 
-async function splitFile(readFilePath, newFilesCount) {
+export async function splitFile(readFilePath, newFilesCount = 2) {
+    const files = [];
     newFilesCount = Number(newFilesCount);
     const fileSize = await getFileSize(readFilePath);
 
@@ -24,8 +25,12 @@ async function splitFile(readFilePath, newFilesCount) {
             end: ranges[i][1],
             highWaterMark: Math.ceil(fileSize / newFilesCount),
         };
-        await writeNewFile(readFilePath, `file_split_${i}.txt`, readOptions);
+        const fileName = `file_split_${i}.txt`;
+        await writeNewFile(readFilePath, fileName, readOptions);
+        files.push(fileName);
     }
+
+    return files;
 }
 
 async function getFileSize(filePath) {
