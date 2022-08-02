@@ -13,20 +13,26 @@ import { stat } from 'fs/promises';
 import { Transform } from 'stream';
 
 
-export async function splitFile(readFilePath, newFilesCount = 2) {
+export async function splitFile(readFilePath, newFilesCount = 22) {
     const files = [];
     newFilesCount = Number(newFilesCount);
     const fileSize = await getFileSize(readFilePath);
 
     for (let i = 0; i < newFilesCount; i++) {
         const ranges = getRanges(fileSize, newFilesCount);
+
         const readOptions = {
             start: ranges[i][0],
             end: ranges[i][1],
             highWaterMark: Math.ceil(fileSize / newFilesCount),
         };
+
         const fileName = `file_split_${i}.txt`;
         await writeNewFile(readFilePath, fileName, readOptions);
+
+        const newfileSize = ((fileSize / newFilesCount) / 1024 / 1024).toFixed(2);
+        console.log(`Создан файл: ${fileName} размером ${newfileSize}Мб`);
+
         files.push(fileName);
     }
 
