@@ -1,0 +1,43 @@
+// https://dbdiagram.io/d
+
+Table users {
+  id uuid [pk]
+  name varchar
+  email varchar
+  password varchar
+  registeredAt timestamp
+}
+
+Table orders {
+  id uuid [pk]
+  date timestamp
+  status varchar
+  userId uuid
+}
+
+Table ordered_products {
+  orderId uuid [pk]
+  productId uuid [pk]
+  name varchar
+  price money
+  quantity int
+}
+
+Table categories {
+  id uuid [pk]
+  name varchar
+}
+
+Table products {
+  id uuid [pk]
+  name varchar
+  price money
+  categoryId uuid
+}
+
+
+Ref: "users"."id" < "orders"."userId"
+
+Ref: "orders"."id" < "ordered_products"."orderId"
+
+Ref: "categories"."id" < "products"."categoryId"
