@@ -1,19 +1,104 @@
 const { faker } = require('@faker-js/faker');
 
 class CommonRandom {
-	createMany(count, relationItems, key) {
-		return Array.from({ length: count }).map(() => this.createOne(relationItems, key));
+	created = {};
+
+	createMany(
+		count,
+		{ relationItems: relationItemsOne, key: keyOne } = {},
+		{ relationItems: relationItemsTwo, key: keyTwo } = {}
+	) {
+		if (relationItemsOne && keyOne && relationItemsTwo && keyTwo) {
+			return this.#manyToMany(
+				count,
+				{ relationItems: relationItemsOne, key: keyOne },
+				{ relationItems: relationItemsTwo, key: keyTwo }
+			);
+		} else if (relationItemsOne && keyOne) {
+			return this.#oneToMany(
+				count,
+				{ relationItems: relationItemsOne, key: keyOne },
+			);
+		} else {
+			return this.#noRelationship(count);
+		}
 	}
 
-	createOne(relationItems, key) {
-		let randomProduct = this._createOne();
+	#noRelationship(count) {
+		return Array.from({ length: count }).map(() => this._createOne());
+	}
 
-		if (relationItems && key) {
-			const categoryIndex = faker.datatype.number(relationItems.length - 1);
-			randomProduct[key] = relationItems[categoryIndex].id;
+	#oneToMany(
+		count,
+		{ relationItems: relationItemsOne, key: keyOne } = {},
+	) {
+		return Array.from({ length: count }).map(() => {
+			const itemOne = this._getRandomItem(relationItemsOne);
+			const item =  this._createOne();
+			item[keyOne] = itemOne.id;
+			return item;
+		});
+	}
+
+	#manyToMany(
+		count,
+		{ relationItems: relationItemsOne, key: keyOne } = {},
+		{ relationItems: relationItemsTwo, key: keyTwo } = {}
+	) {
+		let items = [];
+
+		const allComplexKeys = this._createAllComplexKeys(
+			{ relationItems: relationItemsOne, key: keyOne },
+			{ relationItems: relationItemsTwo, key: keyTwo }
+		)
+
+		const getUniqComplexKey = () => {
+			const complexKey = faker.helpers.arrayElement(allComplexKeys);
+			return complexKey.key;
+		};
+
+		const maxCount = relationItemsOne.length * relationItemsTwo.length;
+		const newCount = count > maxCount ? maxCount : count;
+
+		Array.from({ length: newCount }).forEach(() => {
+			const item =  this._createOne();
+
+			let complexKey;
+			if (item[keyTwo]) {
+				const exclude = allComplexKeys.filter(complexKey => complexKey.keyTwo !== item[keyTwo]);
+				complexKey = faker.unique(getUniqComplexKey, null, { exclude });
+			} else {
+				complexKey = faker.unique(getUniqComplexKey, null);
+			}
+
+			const [pkeyOne, pkeyTwo] = complexKey.split(':');
+			item[keyOne] = pkeyOne;
+			item[keyTwo] = pkeyTwo;
+
+			items.push(item);
+		});
+
+		return items;
+	}
+
+	_createAllComplexKeys(
+		{ relationItems: relationItemsOne } = {},
+		{ relationItems: relationItemsTwo } = {}
+	) {
+		const result = [];
+		for (let i = 0; i < relationItemsOne.length; i++) {
+			for (let j = 0; j < relationItemsTwo.length; j++) {
+				const keyOne = relationItemsOne[i].id;
+				const keyTwo = relationItemsTwo[j].id;
+				result.push({ key: `${keyOne}:${keyTwo}`, keyOne, keyTwo });
+			}
 		}
+		return result;
+	}
 
-		return randomProduct;
+	_getRandomItem(items) {
+		const itemIndex = faker.datatype.number(items.length - 1);
+		return items[itemIndex];
 	}
 
 	_createOne() {
@@ -48,47 +133,38 @@ class RandomProduct extends CommonRandom {
 			id: faker.datatype.uuid(),
 			name: faker.commerce.product(),
 			price: faker.commerce.price(),
+			categoryId: null,
 		};
 	}
 }
 
 class RandomOrder extends CommonRandom {
-	orderedCount = {};
+  _createOne() {
+		return {
+			id: faker.datatype.uuid(),
+			date: faker.date.past(),
+			status: faker.helpers.arrayElement(['registered', 'sent', 'delivered']),
+			userId: null,
+		};
+	}
+}
 
+class RandomOrderedProducts extends CommonRandom {
 	constructor(products, orderedProductsMaxCount) {
 		super();
 		this.products = products;
 		this.orderedProductsMaxCount = orderedProductsMaxCount;
 	}
 
-	_createOne() {
-		this.orderedCount = {};
-
-		const ordersCount = faker.datatype.number({ min: 1, max: this.orderedProductsMaxCount });
-
-		const orderProducts = [];
-
-		Array.from({ length: ordersCount }).forEach(() => {
-			const productIndex = faker.datatype.number(products.length - 1);
-			const product = this.products[productIndex];
-
-			if (this.orderedCount[product.id]) {
-				this.orderedCount[product.id] += 1;
-			} else {
-				this.orderedCount[product.id] = 1;
-				orderProducts.push({ ...product });
-			}
-		});
-
-		const countedOrderProducts = orderProducts.map(product => {
-			product.count = this.orderedCount[product.id];
-			return product;
-		});
+  _createOne() {
+		const product = this._getRandomItem(this.products);
 
 		return {
-			id: faker.datatype.uuid(),
-			date: faker.date.past(),
-			products: countedOrderProducts,
+			orderId: null,
+			productId: product.id,
+			name: product.name,
+			price: product.price,
+			quantity: faker.datatype.number({ min: 1, max: this.orderedProductsMaxCount }),
 		};
 	}
 }
@@ -97,13 +173,21 @@ const randomUser = new RandomUser();
 const users = randomUser.createMany(10);
 
 const randomCategories = new RandomCategory();
-const categories = randomCategories.createMany(6);
+const categories = randomCategories.createMany(3);
 
 const randomProduct = new RandomProduct();
-const products = randomProduct.createMany(10, categories, 'categoryId');
+const products = randomProduct.createMany(12, { relationItems: categories, key: 'categoryId' });
 
-const randomOrder = new RandomOrder(products, 3);
-const orders = randomOrder.createMany(20, users, 'userId');
+const randomOrder = new RandomOrder();
+const orders = randomOrder.createMany(5, { relationItems: users, key: 'userId' });
+
+const randomOrderedProducts = new RandomOrderedProducts(products, 4);
+const orderedProducts = randomOrderedProducts.createMany(
+	10,
+	{ relationItems: orders, key: 'orderId' },
+	{ relationItems: products, key: 'productId' },
+);
+
 
 module.exports = {
 	getUsers() {
@@ -120,5 +204,9 @@ module.exports = {
 
 	getOrders() {
 		return orders;
+	},
+
+	getOrderedProducts() {
+		return orderedProducts;
 	},
 }
