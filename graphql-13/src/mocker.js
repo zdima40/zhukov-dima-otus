@@ -3,32 +3,11 @@ const { faker } = require('@faker-js/faker');
 class CommonRandom {
 	created = {};
 
-	createMany(
-		count,
-		{ relationItems: relationItemsOne, key: keyOne } = {},
-		{ relationItems: relationItemsTwo, key: keyTwo } = {}
-	) {
-		if (relationItemsOne && keyOne && relationItemsTwo && keyTwo) {
-			return this.#manyToMany(
-				count,
-				{ relationItems: relationItemsOne, key: keyOne },
-				{ relationItems: relationItemsTwo, key: keyTwo }
-			);
-		} else if (relationItemsOne && keyOne) {
-			return this.#oneToMany(
-				count,
-				{ relationItems: relationItemsOne, key: keyOne },
-			);
-		} else {
-			return this.#noRelationship(count);
-		}
-	}
-
-	#noRelationship(count) {
+	createMany(count) {
 		return Array.from({ length: count }).map(() => this._createOne());
 	}
 
-	#oneToMany(
+	createManyToOne(
 		count,
 		{ relationItems: relationItemsOne, key: keyOne } = {},
 	) {
@@ -40,7 +19,7 @@ class CommonRandom {
 		});
 	}
 
-	#manyToMany(
+	createManyToMany(
 		count,
 		{ relationItems: relationItemsOne, key: keyOne } = {},
 		{ relationItems: relationItemsTwo, key: keyTwo } = {}
@@ -169,44 +148,10 @@ class RandomOrderedProducts extends CommonRandom {
 	}
 }
 
-const randomUser = new RandomUser();
-const users = randomUser.createMany(10);
-
-const randomCategories = new RandomCategory();
-const categories = randomCategories.createMany(3);
-
-const randomProduct = new RandomProduct();
-const products = randomProduct.createMany(12, { relationItems: categories, key: 'categoryId' });
-
-const randomOrder = new RandomOrder();
-const orders = randomOrder.createMany(5, { relationItems: users, key: 'userId' });
-
-const randomOrderedProducts = new RandomOrderedProducts(products, 4);
-const orderedProducts = randomOrderedProducts.createMany(
-	10,
-	{ relationItems: orders, key: 'orderId' },
-	{ relationItems: products, key: 'productId' },
-);
-
-
 module.exports = {
-	getUsers() {
-		return users;
-	},
-
-	getProducts() {
-		return products;
-	},
-
-	getCategories() {
-		return categories;
-	},
-
-	getOrders() {
-		return orders;
-	},
-
-	getOrderedProducts() {
-		return orderedProducts;
-	},
+	RandomUser,
+	RandomCategory,
+	RandomProduct,
+	RandomOrder,
+	RandomOrderedProducts
 }
